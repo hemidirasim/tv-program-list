@@ -31,11 +31,11 @@ let tvPrograms = {
 // Gün başlıqları və qeydləri
 let dayInfo = {
   bazarertesi: { title: 'Bazar ertəsi', notes: '' },
-  cersenbe: { title: 'Çərşənbə', notes: '' },
-  carsanbe: { title: 'Cümə axşamı', notes: '' },
-  cume: { title: 'Cümə', notes: '' },
-  cumeaxsami: { title: 'Şənbə', notes: '' },
-  senbe: { title: 'Bazar', notes: '' },
+  cersenbe: { title: 'Çərşənbə axşamı', notes: '' },
+  carsanbe: { title: 'Çərşənbə', notes: '' },
+  cume: { title: 'Cümə axşamı', notes: '' },
+  cumeaxsami: { title: 'Cümə', notes: '' },
+  senbe: { title: 'Şənbə', notes: '' },
   bazar: { title: 'Bazar', notes: '' }
 };
 
