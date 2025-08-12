@@ -6,6 +6,9 @@
     <title>AzTV Proqram Siyahısı</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fallback font üçün -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
     <div class="container">
@@ -100,6 +103,19 @@
         <span id="copyMessage">Mətn kopyalandı!</span>
     </div>
 
+    <!-- Error handling üçün -->
+    <script>
+        // Global error handling
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript xətası:', e.error);
+        });
+        
+        // Fallback üçün
+        if (!window.fetch) {
+            console.warn('Fetch API dəstəklənmir, polyfill yüklənir...');
+        }
+    </script>
+    
     <script src="/js/script.js"></script>
 </body>
 </html>
