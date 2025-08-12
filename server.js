@@ -6,8 +6,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files - Vercel üçün
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
@@ -16,6 +16,20 @@ app.use(express.static('public'));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server xətası:', err);
+  res.status(500).json({ error: 'Server xətası baş verdi' });
+});
+
+// Timeout middleware
+app.use((req, res, next) => {
+  req.setTimeout(25000, () => {
+    res.status(408).json({ error: 'Sorğu vaxtı bitdi' });
+  });
+  next();
+});
 
 // Boş TV proqram məlumatları
 let tvPrograms = {
@@ -38,6 +52,15 @@ let dayInfo = {
   senbe: { title: 'Şənbə', notes: '' },
   bazar: { title: 'Bazar', notes: '' }
 };
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
 
 // Ana səhifə
 app.get('/', (req, res) => {
