@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= day %> - AzTV Proqram Siyahısı</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📺 <%= day.charAt(0).toUpperCase() + day.slice(1) %> Proqram Siyahısı</h1>
+            <a href="/" class="back-link">← Ana səhifəyə qayıt</a>
+        </header>
+
+        <div class="day-detail">
+            <div class="day-header">
+                <h2 id="dayTitle" onclick="editDayTitle('<%= day %>')" title="Başlığı dəyişmək üçün klikləyin">
+                    <%= dayData.title %>
+                    <span class="edit-icon">✏️</span>
+                </h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="showParseModal()">📝 Word-dən Yapışdır</button>
+                </div>
+            </div>
+
+            <div class="day-notes-section">
+                <h3>Qeydlər</h3>
+                <textarea 
+                    class="notes-textarea-large" 
+                    placeholder="Bu gün üçün qeydlər..."
+                    onblur="saveDayNotes('<%= day %>', this.value)"
+                ><%= dayData.notes %></textarea>
+            </div>
+
+            <div class="programs-table">
+                <div class="table-header">
+                    <div class="header-cell">Vaxt</div>
+                    <div class="header-cell">Proqram</div>
+                    <div class="header-cell">Təsvir</div>
+                    <div class="header-cell">Kanal</div>
+                    <div class="header-cell">Əməliyyat</div>
+                </div>
+                
+                <% if (programs && programs.length > 0) { %>
+                    <% programs.forEach((program, index) => { %>
+                        <div class="table-row">
+                            <div class="table-cell time-cell"><%= program.time %></div>
+                            <div class="table-cell program-cell"><%= program.program %></div>
+                            <div class="table-cell description-cell"><%= program.description || '-' %></div>
+                            <div class="table-cell channel-cell"><%= program.channel %></div>
+                            <div class="table-cell action-cell">
+                                <button class="btn btn-danger btn-sm" onclick="deleteProgram('<%= day %>', <%= index %>)">Sil</button>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="no-programs">
+                        <p>Bu gün üçün proqram yoxdur</p>
+                        <p>Word-dən kopyaladığınız mətnləri yapışdırın</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gün başlığını dəyişmə modalı -->
+    <div id="editTitleModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Gün Başlığını Dəyiş</h2>
+            <form id="editTitleForm">
+                <div class="form-group">
+                    <label for="dayTitle">Gün başlığı:</label>
+                    <input type="text" id="dayTitle" name="dayTitle" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Yadda Saxla</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditTitleModal()">Ləğv Et</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Word-dən yapışdırma modalı -->
+    <div id="parseModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Word-dən Proqram Siyahısını Yapışdırın</h2>
+            <p class="modal-description">
+                Word-dən kopyaladığınız proqram siyahısını aşağıdakı sahəyə yapışdırın. 
+                Sistem avtomatik olaraq vaxt və proqram adlarını tanıyacaq.
+            </p>
+            <form id="parseForm">
+                <div class="form-group">
+                    <label for="wordText">Word mətni:</label>
+                    <textarea id="wordText" name="wordText" rows="15" placeholder="Məsələn:
+*   **07:00:** &quot;Telesəhər&quot;. Musiqi-informasiya proqramı
+*   **10:00:** &quot;Həftə&quot;. Analitik-informasiya proqramı
+*   **12:00:** &quot;AzTV xəbər&quot;
+*   **12:30:** &quot;Günə davam&quot;
+..." required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Parse Et və Əlavə Et</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeParseModal()">Ləğv Et</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kopyalama bildirişi -->
+    <div id="copyNotification" class="copy-notification">
+        <span id="copyMessage">Mətn kopyalandı!</span>
+    </div>
+
+    <script>
+        const currentDay = '<%= day %>';
+        let currentDayTitle = '<%= dayData.title %>';
+        
+        // Gün başlığını yenilə
+        function updateDayTitle() {
+            const currentDate = new Date();
+            const dateStr = currentDate.toLocaleDateString('az-AZ', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+            
+            document.getElementById('dayTitle').innerHTML = `${currentDayTitle} (${dateStr}) <span class="edit-icon">✏️</span>`;
+        }
+        
+        // Səhifə yükləndikdə gün başlığını yenilə
+        updateDayTitle();
+        
+        // Gün başlığını dəyişmə funksiyaları
+        function editDayTitle(day) {
+            const modal = document.getElementById('editTitleModal');
+            const titleInput = document.getElementById('dayTitle');
+            
+            titleInput.value = currentDayTitle;
+            modal.style.display = 'block';
+            titleInput.focus();
+        }
+        
+        function closeEditTitleModal() {
+            const modal = document.getElementById('editTitleModal');
+            modal.style.display = 'none';
+        }
+        
+        // Gün başlığını yenilə
+        document.getElementById('editTitleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newTitle = document.getElementById('dayTitle').value.trim();
+            
+            if (!newTitle) {
+                alert('Zəhmət olmasa başlıq daxil edin');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/day-info/${currentDay}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: newTitle,
+                        notes: document.querySelector('.notes-textarea-large').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentDayTitle = newTitle;
+                    updateDayTitle();
+                    closeEditTitleModal();
+                    showCopyNotification('Başlıq yeniləndi!', 'success');
+                } else {
+                    alert('Xəta: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Xəta:', error);
+                alert('Xəta baş verdi');
+            }
+        });
+        
+        // Qeydləri yadda saxla
+        async function saveDayNotes(day, notes) {
+            try {
+                const response = await fetch(`/api/day-info/${day}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: currentDayTitle,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showCopyNotification('Qeydlər yadda saxlanıldı!', 'success');
+                }
+            } catch (error) {
+                console.error('Xəta:', error);
+                showCopyNotification('Qeydlər yadda saxlanılmadı!', 'error');
+            }
+        }
+        
+        // Modal funksiyaları
+        function showParseModal() {
+            const modal = document.getElementById('parseModal');
+            modal.style.display = 'block';
+            document.getElementById('wordText').focus();
+        }
+        
+        function closeParseModal() {
+            const modal = document.getElementById('parseModal');
+            modal.style.display = 'none';
+            document.getElementById('wordText').value = '';
+        }
+        
+        // Modal bağlama
+        document.addEventListener('DOMContentLoaded', function() {
+            const modals = document.querySelectorAll('.modal');
+            
+            modals.forEach(modal => {
+                const closeBtn = modal.querySelector('.close');
+                
+                if (closeBtn) {
+                    closeBtn.onclick = function() {
+                        modal.style.display = 'none';
+                    }
+                }
+                
+                window.onclick = function(event) {
+                    if (event.target == modal) {
+                        modal.style.display = 'none';
+                    }
+                }
+            });
+        });
+        
+        // Word mətnini parse etmə
+        document.getElementById('parseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const wordText = document.getElementById('wordText').value.trim();
+            
+            if (!wordText) {
+                alert('Zəhmət olmasa mətn daxil edin');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/parse-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: wordText,
+                        day: currentDay
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeParseModal();
+                    showCopyNotification(`${data.message}`, 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    alert('Xəta: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Xəta:', error);
+                alert('Xəta baş verdi');
+            }
+        });
+        
+        async function deleteProgram(day, index) {
+            if (confirm('Bu proqramı silmək istədiyinizə əminsiniz?')) {
+                try {
+                    const response = await fetch(`/api/programs/${day}/${index}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Xəta baş verdi');
+                    }
+                } catch (error) {
+                    console.error('Xəta:', error);
+                    alert('Xəta baş verdi');
+                }
+            }
+        }
+        
+
+        
+        function showCopyNotification(message, type = 'success') {
+            const notification = document.getElementById('copyNotification');
+            const messageEl = document.getElementById('copyMessage');
+            
+            messageEl.textContent = message;
+            notification.className = `copy-notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AzTV Proqram Siyahısı</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📺 AzTV Həftəlik Proqram Siyahısı</h1>
+            <p>Həftənin bütün günlərinin TV proqramları</p>
+        </header>
+
+        <div class="week-grid">
+            <% 
+            const days = {
+                bazarertesi: 'bazarertesi',
+                cersenbe: 'cersenbe',
+                carsanbe: 'carsanbe',
+                cume: 'cume',
+                cumeaxsami: 'cumeaxsami',
+                senbe: 'senbe',
+                bazar: 'bazar'
+            };
+            
+            Object.entries(days).forEach(([key, dayKey]) => { 
+                const dayData = dayInfo[dayKey] || { title: key, notes: '' };
+            %>
+                <div class="day-card">
+                    <div class="day-title-section">
+                        <h3 class="day-title" onclick="editDayTitle('<%= dayKey %>')" title="Başlığı dəyişmək üçün klikləyin">
+                            <%= dayData.title %>
+                            <span class="edit-icon">✏️</span>
+                        </h3>
+                    </div>
+                    
+                    <div class="programs-list">
+                        <% if (tvPrograms[dayKey] && tvPrograms[dayKey].length > 0) { %>
+                            <% tvPrograms[dayKey].slice(0, 8).forEach(program => { %>
+                                <div class="program-item">
+                                    <span class="time"><%= program.time %></span>
+                                    <div class="program-info">
+                                        <span class="program-name"><%= program.program %></span>
+                                        <% if (program.description) { %>
+                                            <span class="program-description"><%= program.description %></span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                            <% if (tvPrograms[dayKey].length > 8) { %>
+                                <div class="more-programs">
+                                    <a href="/gun/<%= dayKey %>" class="more-link">+<%= tvPrograms[dayKey].length - 8 %> daha</a>
+                                </div>
+                            <% } %>
+                        <% } %>
+                    </div>
+                    
+                    <div class="day-notes">
+                        <textarea 
+                            class="notes-textarea" 
+                            placeholder="Bu gün üçün qeydlər..."
+                            onblur="saveDayNotes('<%= dayKey %>', this.value)"
+                        ><%= dayData.notes %></textarea>
+                    </div>
+                    
+                    <div class="day-actions">
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="exportToHTML()">HTML Export Et</button>
+        </div>
+    </div>
+
+    <!-- Gün başlığını dəyişmə modalı -->
+    <div id="editTitleModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Gün Başlığını Dəyiş</h2>
+            <form id="editTitleForm">
+                <div class="form-group">
+                    <label for="dayTitle">Gün başlığı:</label>
+                    <input type="text" id="dayTitle" name="dayTitle" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Yadda Saxla</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditTitleModal()">Ləğv Et</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kopyalama bildirişi -->
+    <div id="copyNotification" class="copy-notification">
+        <span id="copyMessage">Mətn kopyalandı!</span>
+    </div>
+
+    <script src="/js/script.js"></script>
+</body>
+</html>
