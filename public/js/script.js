@@ -309,7 +309,7 @@ function createHTMLContent(tvPrograms, dayInfo) {
                     </div>
                     ${dayData.notes ? `
                     <div class="day-notes">
-                        <p>${dayData.notes}</p>
+                        <p>${dayData.notes.replace(/\n/g, '<br>')}</p>
                     </div>
                     ` : ''}
                 </div>
